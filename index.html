@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Annotation Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-98SPL77FT1');
+    </script>
     <style>
         .tooltip {
             position: relative;
@@ -36,6 +44,9 @@
             font-weight: bold;
             transform: scale(1.05);
         }
+        #progressBar {
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen font-sans">
@@ -64,7 +75,17 @@
 
         <!-- Data Display -->
         <div id="dataDisplay" class="bg-gray-100 p-5 rounded-lg mb-6 border">
-            <p id="currentData" class="text-lg text-gray-800">Upload a CSV file to load data for annotation.</p>
+            <div id="currentData" class="text-lg text-gray-800">Upload a CSV file to load data for annotation.</div>
+            <table id="dataTable" class="w-full mt-4 hidden text-sm text-gray-700">
+                <thead>
+                    <tr class="bg-gray-200">
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    </tr>
+                </tbody>
+            </table>
             <p id="endOfFile" class="text-sm text-red-500 mt-2 hidden">End of file reached.</p>
         </div>
 
@@ -79,7 +100,7 @@
         </div>
 
         <!-- Controls -->
-        <div class="flex justify-between mb-6">
+        <div class="flex justify-between mb-6 gap-4">
             <button id="prevBtn" class="tooltip bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50" disabled>
                 Previous
                 <span class="tooltip-text">Go to previous data item (←)</span>
@@ -96,7 +117,7 @@
         <p id="saveStatus" class="text-sm text-green-500 text-center hidden">Annotation saved!</p>
 
         <!-- Additional Controls -->
-        <div class="flex justify-between mb-6">
+        <div class="flex justify-between mb-6 gap-4">
             <button id="viewAnnotationsBtn" class="tooltip bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50" disabled>
                 View Annotations
                 <span class="tooltip-text">See all saved annotations</span>
@@ -123,20 +144,22 @@
         <p class="text-sm text-gray-600 mb-6">To share with Google Sheets: Download the CSV, then upload it to Google Drive and open it in Google Sheets, or use "File > Import" in Google Sheets.</p>
 
         <!-- Annotations Modal -->
-        <div id="annotationsModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
-            <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <div id="annotationsModal" className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden">
+            <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
                 <h2 class="text-lg font-semibold mb-4">Saved Annotations</h2>
                 <ul id="annotationsList" class="list-disc pl-5 mb-4"></ul>
-                <button id="closeModalBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Close</button>
+                <button id="closeModalBtn" class="bg-gray-600 text-white px-4 py-2 hover:bg-gray-700 rounded-lg">Close</button>
+            </div>
             </div>
         </div>
 
         <!-- Settings Modal -->
         <div id="settingsModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
                 <h2 class="text-lg font-semibold mb-4">Settings</h2>
-                <div class="mb-4">
-                    <label for="columnSelect" class="block text-sm font-medium text-gray-700 mb-2">Select Column for Annotation:</label>
+                <div class="div mb-4">
+                    <div label for="columnSelect" class="block text-sm font-medium text-gray-700 mb-2">Select Column for Annotation:</label>
                     <select id="columnSelect" class="w-full p-2 border rounded-lg"></select>
                 </div>
                 <h3 class="text-sm font-medium text-gray-700 mb-2">Customize Labels</h3>
@@ -152,11 +175,17 @@
                 </div>
             </div>
         </div>
+
+        <!-- Privacy Notice -->
+        <div id="privacyNotice" class="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center">
+            <p class="text-sm">We use cookies and Google Analytics to improve your experience. By continuing, you agree to our <a href="/privacy.html" class="underline hover:text-blue-300" target="_blank">Privacy Policy</a>.</p>
+            <button id="acceptPrivacyBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Accept</button>
+        </div>
     </div>
 
     <script>
         // Data and annotations
-        let dataItems = []; // 2D array for all columns
+        let dataItems = [];
         let annotations = [];
         let currentIndex = -1;
         let currentFileName = '';
@@ -180,6 +209,7 @@
         const progressCount = document.getElementById('progressCount');
         const progressBar = document.getElementById('progressBar');
         const dataDisplay = document.getElementById('currentData');
+        const dataTable = document.getElementById('dataTable');
         const endOfFile = document.getElementById('endOfFile');
         const labelsContainer = document.getElementById('labelsContainer');
         const othersInput = document.getElementById('othersInput');
@@ -204,6 +234,19 @@
         const labelError = document.getElementById('labelError');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const privacyNotice = document.getElementById('privacyNotice');
+        const acceptPrivacyBtn = document.getElementById('acceptPrivacyBtn');
+
+        // Initialize privacy notice
+        function initPrivacyNotice() {
+            if (localStorage.getItem('privacyAccepted') === 'true') {
+                privacyNotice.classList.add('hidden');
+            }
+            acceptPrivacyBtn.addEventListener('click', () => {
+                localStorage.setItem('privacyAccepted', 'true');
+                privacyNotice.classList.add('hidden');
+            });
+        }
 
         // Render labels
         function renderLabels() {
@@ -256,6 +299,30 @@
                 if (index === tempColumn) option.selected = true;
                 columnSelect.appendChild(option);
             });
+            console.log('Column selector rendered:', columnHeaders, tempColumn);
+        }
+
+        // Render data table
+        function renderDataTable() {
+            if (currentIndex < 0 || !dataItems[currentIndex]) {
+                dataTable.classList.add('hidden');
+                return;
+            }
+            dataTable.classList.remove('hidden');
+            const thead = dataTable.querySelector('thead tr');
+            const tbody = dataTable.querySelector('tbody tr');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            columnHeaders.forEach((header, index) => {
+                const th = document.createElement('th');
+                th.className = `p-2 ${index === selectedColumn ? 'bg-blue-100 font-semibold' : ''}`;
+                th.textContent = header || `Column ${index + 1}`;
+                thead.appendChild(th);
+                const td = document.createElement('td');
+                td.className = `p-2 ${index === selectedColumn ? 'bg-blue-50' : ''}`;
+                td.textContent = dataItems[currentIndex][index] || '';
+                tbody.appendChild(td);
+            });
         }
 
         // Handle CSV file upload
@@ -291,10 +358,18 @@
                     columnHeaders = headers;
                     dataItems = data;
                     currentIndex = -1;
-                    annotations = new Array(dataItems.length).fill(null);
+                    // Load annotations from localStorage if available
+                    const savedData = localStorage.getItem(`annotations_${currentFileName}`);
+                    annotations = savedData ? JSON.parse(savedData) : new Array(dataItems.length).fill(null);
                     lastAnnotation = null;
                     selectedColumn = 0;
                     uploadStatus.textContent = `Loaded ${dataItems.length} data items from ${file.name} with ${columnHeaders.length} columns.`;
+                    console.log('Initial state:', { dataItems, annotations, selectedColumn });
+                    gtag('event', 'upload_csv', {
+                        'event_category': 'File',
+                        'event_label': file.name,
+                        'value': data.length
+                    });
                     updateProgress();
                     renderColumnSelector();
                     loadNextData();
@@ -317,31 +392,37 @@
         // Parse CSV into headers and data
         function parseCSV(text) {
             const rows = text.split('\n').map(row => row.trim()).filter(row => row);
-            if (rows.length <= 0) return { headers: [], data: [] };
+            if (rows.length <= 0) {
+                console.warn('No rows found in CSV.');
+                return { headers: [], data: [] };
+            }
             const headers = rows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.replace(/^"|"$/g, '').trim());
             const data = rows.slice(1).map(row => {
                 const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
                 return columns;
-            }).filter(row => row.some(cell => cell)); // Remove empty rows
+            }).filter(row => row.some(cell => cell));
+            console.log('Parsed CSV:', { headers, data });
             return { headers, data };
         }
 
-        // Load next data item
+        // Load next data
         function loadNextData() {
             if (currentIndex < dataItems.length - 1) {
                 currentIndex++;
                 dataDisplay.textContent = dataItems[currentIndex][selectedColumn] || 'No data available.';
+                renderDataTable();
                 endOfFile.classList.toggle('hidden', currentIndex < dataItems.length - 1);
                 resetInputs();
                 updateButtons();
             }
         }
 
-        // Load previous data item
+        // Load previous data
         function loadPrevData() {
             if (currentIndex > 0) {
                 currentIndex--;
                 dataDisplay.textContent = dataItems[currentIndex][selectedColumn] || 'No data available.';
+                renderDataTable();
                 endOfFile.classList.add('hidden');
                 resetInputs();
                 updateButtons();
@@ -361,6 +442,11 @@
             });
             othersInput.classList.add('hidden');
             otherDetails.value = '';
+            if (annotations[currentIndex]) {
+                document.querySelector(`input[value="${annotations[currentIndex].label}"]`).checked = true;
+                othersInput.classList.toggle('hidden', annotations[currentIndex].label !== 'Others');
+                otherDetails.value = annotations[currentIndex].details || '';
+            }
         }
 
         // Update button states
@@ -385,21 +471,32 @@
 
         // Save annotation and advance
         function saveAnnotation() {
-            const selectedLabel = document.querySelector('input[name="label"]:checked').value;
-            const otherText = selectedLabel === 'Others' ? otherDetails.value.trim() : '';
-            if (currentIndex >= 0) {
-                lastAnnotation = { index: currentIndex, annotation: annotations[currentIndex] };
-                annotations[currentIndex] = { label: selectedLabel, details: otherText };
-                updateProgress();
-                saveStatus.classList.remove('hidden');
-                setTimeout(() => saveStatus.classList.add('hidden'), 2000);
-                if (currentIndex < dataItems.length - 1) {
-                    loadNextData();
-                } else {
-                    endOfFile.classList.remove('hidden');
-                    resetInputs();
-                    updateButtons();
+            try {
+                const selectedLabel = document.querySelector('input[name="label"]:checked').value;
+                const otherText = selectedLabel === 'Others' ? otherDetails.value.trim() : '';
+                if (currentIndex >= 0) {
+                    lastAnnotation = { index: currentIndex, annotation: annotations[currentIndex] };
+                    annotations[currentIndex] = { label: selectedLabel, details: otherText };
+                    localStorage.setItem(`annotations_${currentFileName}`, JSON.stringify(annotations));
+                    gtag('event', 'save_annotation', {
+                        'event_category': 'Annotation',
+                        'event_label': selectedLabel,
+                        'value': currentIndex
+                    });
+                    updateProgress();
+                    saveStatus.classList.remove('hidden');
+                    setTimeout(() => saveStatus.classList.add('hidden'), 2000);
+                    if (currentIndex < dataItems.length - 1) {
+                        loadNextData();
+                    } else {
+                        endOfFile.classList.remove('hidden');
+                        resetInputs();
+                        updateButtons();
+                    }
                 }
+            } catch (error) {
+                console.error('Save annotation error:', error);
+                alert('Failed to save annotation. Check console for details.');
             }
         }
 
@@ -407,8 +504,10 @@
         function undoAnnotation() {
             if (lastAnnotation) {
                 annotations[lastAnnotation.index] = lastAnnotation.annotation;
+                localStorage.setItem(`annotations_${currentFileName}`, JSON.stringify(annotations));
                 currentIndex = lastAnnotation.index;
                 dataDisplay.textContent = dataItems[currentIndex][selectedColumn] || 'No data available.';
+                renderDataTable();
                 endOfFile.classList.toggle('hidden', currentIndex < dataItems.length - 1);
                 lastAnnotation = null;
                 updateProgress();
@@ -424,9 +523,20 @@
                 if (annotation) {
                     const li = document.createElement('li');
                     const details = annotation.details ? ` (${annotation.details})` : '';
-                    li.textContent = `Data: "${dataItems[index][selectedColumn]}" - Label: ${annotation.label}${details}`;
+                    li.innerHTML = `Data: "${dataItems[index][selectedColumn]}" - Label: ${annotation.label}${details} <button class="edit-btn text-blue-500 hover:text-blue-700 ml-2" data-index="${index}">Edit</button>`;
                     annotationsList.appendChild(li);
                 }
+            });
+            annotationsList.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.dataset.index);
+                    currentIndex = index;
+                    dataDisplay.textContent = dataItems[currentIndex][selectedColumn] || 'No data available.';
+                    renderDataTable();
+                    resetInputs();
+                    annotationsModal.classList.add('hidden');
+                    updateButtons();
+                });
             });
             annotationsModal.classList.remove('hidden');
         }
@@ -466,11 +576,13 @@
                     downloadAnnotations();
                 }
                 annotations = new Array(dataItems.length).fill(null);
+                localStorage.removeItem(`annotations_${currentFileName}`);
                 lastAnnotation = null;
                 currentIndex = -1;
             }
             labels = [...tempLabels];
             selectedColumn = newColumn;
+            console.log('Settings saved:', { labels, selectedColumn });
             renderLabels();
             settingsModal.classList.add('hidden');
             labelError.classList.add('hidden');
@@ -480,22 +592,47 @@
 
         // Download annotations as CSV
         function downloadAnnotations() {
-            const csvRows = ['"Data","Label","Details"'];
-            dataItems.forEach((row, index) => {
-                if (annotations[index]) {
-                    const data = row[selectedColumn];
-                    const label = annotations[index].label;
-                    const details = annotations[index].details ? `"${annotations[index].details.replace(/"/g, '""')}"` : '';
-                    csvRows.push(`"${data.replace(/"/g, '""')}","${label}",${details}`);
+            try {
+                const csvRows = ['"Data","Label","Details"'];
+                dataItems.forEach((row, index) => {
+                    if (annotations[index]) {
+                        const data = row[selectedColumn] || '';
+                        const label = annotations[index].label || '';
+                        const details = annotations[index].details ? `"${annotations[index].details.replace(/"/g, '""')}"` : '';
+                        csvRows.push(`"${data.replace(/"/g, '""')}","${label}",${details}`);
+                    }
+                });
+                if (csvRows.length <= 1) {
+                    alert('No annotations to download.');
+                    return;
                 }
-            });
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `annotations_column_${columnHeaders[selectedColumn] || selectedColumn + 1}.csv`;
-            link.click();
+                const csvContent = csvRows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `annotations_column_${columnHeaders[selectedColumn] || selectedColumn + 1}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                gtag('event', 'download_csv', {
+                    'event_category': 'File',
+                    'event_label': currentFileName,
+                    'value': annotations.filter(a => a !== null).length
+                });
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Failed to download CSV. Check console for details.');
+            }
         }
+
+        // Prevent accidental page close
+        window.addEventListener('beforeunload', (e) => {
+            if (annotations.some(a => a !== null)) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved annotations. Are you sure you want to leave?';
+            }
+        });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -535,6 +672,7 @@
         closeModalBtn.addEventListener('click', () => annotationsModal.classList.add('hidden'));
 
         // Initialize
+        initPrivacyNotice();
         renderLabels();
         updateButtons();
     </script>
