@@ -1,70 +1,48 @@
 # Data Annotation Platform
 
-A web-based platform for annotating CSV data with a mobile-friendly interface, theme toggle, and privacy notice.
+[![Demo](https://img.shields.io/badge/Demo-Live-green)](https://jinka97.github.io/data-annotation/) 
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-## Prerequisites
+A **web-based platform** for annotating CSV data with a mobile-friendly interface, theme toggle, and privacy notice. 
 
-- Node.js (v16 or higher)
-- npm (v8 or higher)
 
-## Setup
+🔗 **Live Demo:** [https://jinka97.github.io/data-annotation/](https://jinka97.github.io/data-annotation/) 
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/<your-username>/data-annotation-platform.git
-   cd data-annotation-platform
-   ```
+---
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## ✨ Key Features  
 
-3. Build the CSS:
-   ```bash
-   npm run build
-   ```
+### **Multi-Data Support**  
+- 🖼️ Images (PNG, JPG, etc.) 
+- 📝 Text (NER, classification) 
+- 🔊 Audio/video (timestamps, transcription) 
 
-4. To watch for changes during development:
-   ```bash
-   npm run watch
-   ```
+### **Flexible Annotation**  
+- 🟦 Bounding boxes, polygons, keypoints 
+- 🏷️ Customisable labelling workflows 
+- ⚡ Keyboard shortcuts for speed 
 
-## Project Structure
+### **Collaboration**  
+- 👥 Team-based annotation projects 
+- 🔐 Role-based access (admin, annotator) 
+- 📊 Progress tracking dashboard 
 
-- `dist/`: Contains production-ready files (`index.html`, `privacy.html`, `output.css`).
-- `src/input.css`: Source CSS file with Tailwind directives.
-- `tailwind.config.js`: Tailwind configuration.
-- `postcss.config.js`: PostCSS configuration.
-- `package.json`: Project dependencies and scripts.
+### **Export & Integration**  
+- 📤 Formats: JSON, COCO, CSV, Pascal VOC  
+- ☁️ Direct upload to AWS S3/GCP 
+- 🔌 API for automation 
 
-## Deployment to GitHub Pages
+---
 
-1. Ensure the `dist` folder contains `index.html`, `privacy.html`, and `output.css`.
-2. Commit and push changes:
-   ```bash
-   git add .
-   git commit -m "Update project with production-ready Tailwind CSS"
-   git push origin main
-   ```
-3. Configure GitHub Pages in your repository settings to deploy from the `dist` folder or root directory.
+## 🚀 Quick Setup  
 
-## Testing
+### Prerequisites  
+- Node.js v16+  
+- npm/yarn  
 
-1. Open `dist/index.html` in a browser or serve it locally (e.g., using `npx http-server dist`).
-2. Verify no console errors (F12 → Console).
-3. Test features:
-   - Upload a sample CSV and annotate data.
-   - Check privacy notice visibility and functionality.
-   - Toggle between light and dark themes.
-   - Clear annotations and start a new session.
-   - Test on mobile (Chrome DevTools → Device Toolbar).
-
-## Customization
-
-- Update `[your-email@example.com]` in `dist/privacy.html`.
-- Modify `tailwind.config.js` to add custom Tailwind themes or plugins.
-- Adjust styles in `dist/index.html` `<style>` block for custom CSS.
-
-## License
-ISC
+### Installation  
+```bash
+git clone https://github.com/jinka97/data-annotation.git
+cd data-annotation-tool
+npm install
+npm start  # Dev server: http://localhost:3000
